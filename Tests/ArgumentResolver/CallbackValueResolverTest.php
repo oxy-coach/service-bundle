@@ -30,7 +30,8 @@ class CallbackValueResolverTest extends TestCase
         $this->resolver = new CallbackValueResolver(
             new SymfonySerializerAdapter($serializer, $serializer),
             Validation::createValidatorBuilder()
-                ->enableAnnotationMapping()
+                ->enableAnnotationMapping(true)
+                ->addDefaultDoctrineAnnotationReader()
                 ->getValidator(),
             [
                 [

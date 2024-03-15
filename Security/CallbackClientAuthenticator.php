@@ -3,6 +3,9 @@
 namespace RetailCrm\ServiceBundle\Security;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 /**
  * Class CallbackClientAuthenticator
@@ -19,11 +22,12 @@ class CallbackClientAuthenticator extends AbstractClientAuthenticator
         return $request->request->has(static::AUTH_FIELD) || $request->query->has(static::AUTH_FIELD);
     }
 
-    /**
-     * {@inheritdoc }
-     */
-    public function supportsRememberMe(): bool
+    public function authenticate(Request $request): Passport
     {
-        return false;
+        $clientId = $request->request->get(static::AUTH_FIELD) ?? $request->query->get(static::AUTH_FIELD);
+
+        return new SelfValidatingPassport(
+            new UserBadge((string) $clientId)
+        );
     }
 }

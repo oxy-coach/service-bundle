@@ -30,7 +30,8 @@ class ClientValueResolverTest extends TestCase
         $this->resolver = new ClientValueResolver(
             new SymfonySerializerAdapter($serializer, $serializer),
             Validation::createValidatorBuilder()
-                ->enableAnnotationMapping()
+                ->enableAnnotationMapping(true)
+                ->addDefaultDoctrineAnnotationReader()
                 ->getValidator(),
             [
                 RequestDto::class

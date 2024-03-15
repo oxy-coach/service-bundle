@@ -2,9 +2,16 @@
 
 namespace RetailCrm\ServiceBundle\Security;
 
+use RetailCrm\ServiceBundle\Models\Error;
 use RetailCrm\ServiceBundle\Response\ErrorJsonResponseFactory;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 /**
  * Class FrontApiClientAuthenticator
@@ -13,18 +20,10 @@ use Symfony\Component\Security\Core\Security;
  */
 class FrontApiClientAuthenticator extends AbstractClientAuthenticator
 {
-    private $security;
+    private Security $security;
 
-    /**
-     * FrontApiClientAuthenticator constructor.
-     *
-     * @param ErrorJsonResponseFactory $errorResponseFactory
-     * @param Security                 $security
-     */
-    public function __construct(
-        ErrorJsonResponseFactory $errorResponseFactory,
-        Security $security
-    ) {
+    public function __construct(ErrorJsonResponseFactory $errorResponseFactory, Security $security)
+    {
         parent::__construct($errorResponseFactory);
 
         $this->security = $security;
@@ -42,11 +41,21 @@ class FrontApiClientAuthenticator extends AbstractClientAuthenticator
         return $request->request->has(static::AUTH_FIELD);
     }
 
-    /**
-     * {@inheritdoc }
-     */
-    public function supportsRememberMe(): bool
+    public function authenticate(Request $request): Passport
     {
-        return true;
+        $clientId = $request->request->get(static::AUTH_FIELD);
+
+        return new SelfValidatingPassport(
+            new UserBadge((string) $clientId),
+            [new RememberMeBadge()]
+        );
+    }
+
+    public function start(Request $request, AuthenticationException $authException = null): Response
+    {
+        $error = new Error();
+        $error->message = 'Authentication required';
+
+        return $this->errorResponseFactory->create($error, Response::HTTP_UNAUTHORIZED);
     }
 }
